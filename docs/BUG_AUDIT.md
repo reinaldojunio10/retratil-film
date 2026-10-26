@@ -11,6 +11,7 @@
 | BUG-006 | Índice único com `created_at::date` (não imutável) em `whatsapp_messages`. | Revisão antes da execução | Uso de `(created_at at time zone 'UTC')::date`. |
 | BUG-007 | Consulta da agenda usava `UNION` com `t.*` e colunas incompatíveis. | Revisão de código | Colunas explícitas nos dois lados. |
 | BUG-008 | Exportar `serviceFields` de `page.tsx` quebraria o build do Next. | Revisão | Movido para `servicos/fields.ts`. |
+| BUG-010 | No Supabase, funções criadas após a revogação inicial ficavam executáveis pelos papéis públicos `anon`/`authenticated` (Data API), permitindo chamar automações e injetar mensagens de webhook. | Revisão de segurança para o Supabase | Migration `0007_supabase_hardening.sql` revoga e bloqueia concessões futuras; validado em banco simulado. |
 | BUG-009 | Helper do E2E confundia o anunciador de rotas do Next (`role=alert`) com mensagens do app. | Falso negativo no E2E | Seletor restrito às mensagens do app. |
 
 ## Pendentes / limitações conhecidas

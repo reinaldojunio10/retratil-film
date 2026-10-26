@@ -18,7 +18,11 @@ npm run db:demo                # opcional: dados de demonstração marcados como
 npm run dev                    # http://localhost:3000
 ```
 
-No Supabase: use a connection string do Postgres. `DATABASE_ADMIN_URL` = usuário `postgres`; crie um papel de login para o app (`create role retratil_app login password '...'; grant app_runtime to retratil_app;`) e use-o em `DATABASE_URL` com `DATABASE_SSL=true`.
+### Supabase (sem precisar de terminal)
+1. SQL Editor → cole `db/supabase/1-instalar.sql` → Run (uma única vez).
+2. SQL Editor → cole `db/supabase/2-acesso-e-proprietario.sql`, troque os valores `TROQUE_…` → Run.
+3. No app (Vercel/.env): `DATABASE_URL=postgresql://retratil_app.<ref-do-projeto>:<senha-do-app>@<host-do-pooler>:6543/postgres` (Connect → *Transaction pooler*) e `DATABASE_SSL=true`.
+Atualizações futuras: `npm run db:migrate` com `DATABASE_ADMIN_URL` do usuário `postgres`. Após mudar migrations, regenere o pacote com `npm run db:bundle`.
 
 ## Verificações
 ```bash

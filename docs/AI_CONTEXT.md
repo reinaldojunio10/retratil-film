@@ -32,6 +32,7 @@ dashboard, clientes, funil, servicos, propostas, contratos, projetos, tarefas, f
 - Dados DEMO: `npm run db:demo` / `npm run db:demo -- --remove`.
 
 ## Estado atual (2026-10-26)
+- Instalação no Supabase: `db/supabase/1-instalar.sql` (gerado por `npm run db:bundle`) + `2-acesso-e-proprietario.sql`.
 - Todos os módulos implementados; lint, typecheck, 41 testes Vitest, build e E2E (42 passos) passando.
 - Não foi feito deploy. Nenhuma credencial real configurada (WhatsApp em modo teste no .env local).
 - Próximos passos sugeridos: ver "Pendências" em `docs/BUG_AUDIT.md`.
