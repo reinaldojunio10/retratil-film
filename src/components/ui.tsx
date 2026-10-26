@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Children, cloneElement, isValidElement } from "react";
 import type { Tone } from "@/lib/labels";
 
 export function PageHeader({ title, description, actions, back }: { title: string; description?: string; actions?: React.ReactNode; back?: { href: string; label: string } }) {
@@ -10,10 +11,10 @@ export function PageHeader({ title, description, actions, back }: { title: strin
             ← {back.label}
           </Link>
         )}
-        <h1 className="truncate text-2xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="break-words text-xl font-semibold tracking-tight sm:truncate sm:text-2xl">{title}</h1>
         {description && <p className="mt-1 text-sm text-stone-500">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
   );
 }
@@ -36,7 +37,7 @@ export function StatusBadge({ map, value }: { map: Record<string, { label: strin
 
 export function Card({ title, actions, children, className = "", padded = true }: { title?: string; actions?: React.ReactNode; children: React.ReactNode; className?: string; padded?: boolean }) {
   return (
-    <section className={`card ${className}`}>
+    <section className={`card min-w-0 ${className}`}>
       {(title || actions) && (
         <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
           {title && <h2 className="text-sm font-semibold">{title}</h2>}
@@ -69,15 +70,24 @@ export function Empty({ title, description, action }: { title: string; descripti
   );
 }
 
+/** Tabela que vira lista de cartões no celular: cada célula recebe o rótulo da coluna (data-label). */
 export function Table({ head, children, empty }: { head: React.ReactNode[]; children: React.ReactNode; empty?: React.ReactNode }) {
+  const labels = head.map((h) => (typeof h === "string" ? h : ""));
+  const rows = Children.map(children, (row) => {
+    if (!isValidElement<{ children?: React.ReactNode }>(row)) return row;
+    const cells = Children.toArray(row.props.children).map((td, i) =>
+      isValidElement(td) ? cloneElement(td as React.ReactElement<Record<string, unknown>>, { "data-label": labels[i] ?? "" }) : td,
+    );
+    return cloneElement(row, {}, ...cells);
+  });
   return (
-    <div className="card overflow-hidden">
+    <div className="card rtable overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] divide-y divide-line">
+        <table className="w-full divide-y divide-line">
           <thead className="bg-soft/60">
             <tr>{head.map((h, i) => <th key={i} className="th">{h}</th>)}</tr>
           </thead>
-          <tbody className="divide-y divide-line">{children}</tbody>
+          <tbody className="divide-y divide-line">{rows}</tbody>
         </table>
       </div>
       {empty}
@@ -90,7 +100,7 @@ export function ButtonLink({ href, children, variant = "primary", size }: { href
 }
 
 export function DemoTag({ show }: { show?: boolean }) {
-  return show ? <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">Demo</span> : null;
+  return show ? <span className="ml-1.5 whitespace-nowrap rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">Demo</span> : null;
 }
 
 export function Detail({ label, children }: { label: string; children: React.ReactNode }) {

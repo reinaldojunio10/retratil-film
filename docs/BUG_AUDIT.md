@@ -12,9 +12,16 @@
 | BUG-007 | Consulta da agenda usava `UNION` com `t.*` e colunas incompatíveis. | Revisão de código | Colunas explícitas nos dois lados. |
 | BUG-008 | Exportar `serviceFields` de `page.tsx` quebraria o build do Next. | Revisão | Movido para `servicos/fields.ts`. |
 | BUG-010 | No Supabase, funções criadas após a revogação inicial ficavam executáveis pelos papéis públicos `anon`/`authenticated` (Data API), permitindo chamar automações e injetar mensagens de webhook. | Revisão de segurança para o Supabase | Migration `0007_supabase_hardening.sql` revoga e bloqueia concessões futuras; validado em banco simulado. |
+| BUG-011 | Classes `.input`/`.btn` fora de `@layer` venciam utilitários do Tailwind (ex.: `sm:w-80`), deixando filtros sempre em largura total. | Captura no tablet | Classes movidas para `@layer components`. |
+| BUG-012 | Painel inicial e tela de WhatsApp mais largos que a tela no celular (itens de grade sem `min-w-0`, URL/variáveis sem quebra); o navegador reduzia o zoom e toques na barra inferior caíam no lugar errado. | Teste E2E do PWA (Pixel 7) | `Card` com `min-w-0`; `break-all` nos códigos longos. |
+| BUG-013 | Tabelas com rolagem lateral no celular, tablet e notebook de 1024px; campos com fonte < 16px (zoom no iPhone); alvos de toque < 40px. | Auditoria responsiva (150 ocorrências antes) | Tabelas viram cartões < 1280px, fonte 16px e alvos ≥ 44px no celular. |
+| BUG-014 | A auditoria responsiva comparava com `innerWidth`, que "estica" em emulação móvel e escondia estouros de largura. | Investigação do BUG-012 | Comparação com a largura real do aparelho. |
 | BUG-009 | Helper do E2E confundia o anunciador de rotas do Next (`role=alert`) com mensagens do app. | Falso negativo no E2E | Seletor restrito às mensagens do app. |
 
 ## Pendentes / limitações conhecidas
+- **Testes em aparelhos reais não realizados**: celular/tablet testados por emulação no Chromium (Playwright). Safari/WebKit real (iPhone) não estava disponível no ambiente; validar instalação do PWA e layout em iPhone e Android físicos.
+- Um erro de hidratação do React (#418) apareceu uma única vez em `/equipamentos/reservas` durante a auditoria e não se repetiu em 4 execuções seguintes; acompanhar.
+- ~~Workflow Deno incompatível~~ substituído por `.github/workflows/ci.yml` (Node 22 + PostgreSQL 16: lint, typecheck, testes unitários e de integração, build).
 - **Credenciais externas**: WhatsApp Business Platform (token, phone number id, verify token, app secret) não configuradas; envio real nunca foi testado contra a Meta.
 - **Assinatura digital** de contratos não integrada (há apenas registro manual de assinatura).
 - **Arquivos de projeto**: guardados como links (Drive/Dropbox/Frame.io). Upload para Supabase Storage não implementado.

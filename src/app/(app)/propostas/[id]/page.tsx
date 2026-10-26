@@ -83,18 +83,18 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <Card title="Itens" padded={false}>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[560px] divide-y divide-line">
+            <div className="rtable overflow-x-auto">
+              <table className="w-full divide-y divide-line">
                 <thead className="bg-soft/60"><tr><th className="th">Descrição</th><th className="th text-right">Qtd.</th><th className="th text-right">Unitário</th><th className="th text-right">Total</th>{editable && <th className="th" />}</tr></thead>
                 <tbody className="divide-y divide-line">
                   {items.map((i) => (
                     <tr key={i.id}>
                       <td className="td whitespace-pre-wrap">{i.description}</td>
-                      <td className="td text-right">{String(i.quantity).replace(".", ",")}</td>
-                      <td className="td text-right whitespace-nowrap">{brl(i.unit_price)}</td>
-                      <td className="td text-right whitespace-nowrap font-medium">{brl(i.quantity * i.unit_price)}</td>
+                      <td className="td text-right" data-label="Qtd.">{String(i.quantity).replace(".", ",")}</td>
+                      <td className="td text-right whitespace-nowrap" data-label="Unitário">{brl(i.unit_price)}</td>
+                      <td className="td text-right whitespace-nowrap font-medium" data-label="Total">{brl(i.quantity * i.unit_price)}</td>
                       {editable && (
-                        <td className="td text-right">
+                        <td className="td text-right" data-label="">
                           <form action={removeItem}><input type="hidden" name="id" value={i.id} /><input type="hidden" name="proposal_id" value={p.id} />
                             <ConfirmButton message="Remover este item?" className="btn btn-ghost btn-sm">Remover</ConfirmButton></form>
                         </td>
@@ -105,10 +105,10 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
                 </tbody>
               </table>
             </div>
-            <dl className="space-y-1 border-t border-line p-4 text-sm">
-              <div className="flex justify-end gap-8"><dt className="text-stone-500">Subtotal</dt><dd className="w-32 text-right">{brl(p.subtotal)}</dd></div>
-              {discount > 0 && <div className="flex justify-end gap-8"><dt className="text-stone-500">Desconto{p.discount_type === "percentual" ? ` (${p.discount_value}%)` : ""}</dt><dd className="w-32 text-right">- {brl(discount)}</dd></div>}
-              <div className="flex justify-end gap-8 text-base font-semibold"><dt>Total</dt><dd className="w-32 text-right" data-testid="proposal-total">{brl(p.total)}</dd></div>
+            <dl className="space-y-1 border-t border-line p-4 text-sm [&>div]:justify-between sm:[&>div]:justify-end">
+              <div className="flex justify-end gap-8"><dt className="text-stone-500">Subtotal</dt><dd className="text-right sm:w-32">{brl(p.subtotal)}</dd></div>
+              {discount > 0 && <div className="flex justify-end gap-8"><dt className="text-stone-500">Desconto{p.discount_type === "percentual" ? ` (${p.discount_value}%)` : ""}</dt><dd className="text-right sm:w-32">- {brl(discount)}</dd></div>}
+              <div className="flex justify-end gap-8 text-base font-semibold"><dt>Total</dt><dd className="text-right sm:w-32" data-testid="proposal-total">{brl(p.total)}</dd></div>
             </dl>
             {editable && (
               <div className="border-t border-line bg-soft/40 p-4">

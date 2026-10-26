@@ -31,6 +31,14 @@ dashboard, clientes, funil, servicos, propostas, contratos, projetos, tarefas, f
 - Owner de teste: `dono@retratil.test` (senha gerada localmente, fora do repositório).
 - Dados DEMO: `npm run db:demo` / `npm run db:demo -- --remove`.
 
+## Mobile e PWA
+- Layout: menu lateral fixo ≥ 1024px; abaixo disso, cabeçalho + gaveta (Esc fecha, trava rolagem) + barra inferior com 4 atalhos (por permissão) + "Mais". Áreas seguras via `env(safe-area-inset-*)` (`pt-safe`/`pb-safe`).
+- `Table` (ui.tsx) injeta `data-label` em cada célula; CSS `.rtable` vira cartões abaixo de 1280px. Classes `.input/.btn/...` ficam em `@layer components` para utilitários do Tailwind poderem sobrescrever.
+- Toque: alvos ≥ 44px e campos com 16px no celular (evita zoom do iOS). `Card` tem `min-w-0` (itens de grade não estouram a largura).
+- PWA: `src/app/manifest.ts`, ícones em `public/icons` (`node scripts/generate-icons.mjs`), `public/sw.js` + `public/offline.html`, registro em `components/pwa.tsx` (só produção) e instruções em /conta.
+- Política de cache do SW: só `/_next/static/*`, `/icons/*` e `/offline.html`. Navegações sempre na rede (offline → página sem dados); GET de dados/RSC/API/PDF e qualquer POST nunca são interceptados. Páginas autenticadas saem com `Cache-Control: private, no-store`.
+- Testes: `tests/e2e/responsive.mjs` (6 dispositivos × 34 telas: largura real, cortes, rolagem interna, fonte < 16px, alvos < 40px, erros de console) e `tests/e2e/pwa.mjs`.
+
 ## Estado atual (2026-10-26)
 - Instalação no Supabase: `db/supabase/1-instalar.sql` (gerado por `npm run db:bundle`) + `2-acesso-e-proprietario.sql`.
 - Todos os módulos implementados; lint, typecheck, 41 testes Vitest, build e E2E (42 passos) passando.

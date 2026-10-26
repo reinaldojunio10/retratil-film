@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      TEST_DATABASE_ADMIN_URL: postgres://retratil:retratil_ci@localhost:5432/retratil_test
+      TEST_DATABASE_URL: postgres://retratil_app:retratil_app_ci@localhost:5432/retratil_test
+      DATABASE_URL: postgres://retratil_app:retratil_app_ci@localhost:5432/retratil_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare test database
+        # Papéis iguais aos de produção: dono das tabelas (migrations) e papel do app sujeito ao RLS
+        run: |
+          psql -v ON_ERROR_STOP=1 -c "create role retratil login password 'retratil_ci' createrole;"
+          psql -v ON_ERROR_STOP=1 -c "create database retratil_test owner retratil;"
+          psql -v ON_ERROR_STOP=1 -c "create role app_runtime nologin;"
+          psql -v ON_ERROR_STOP=1 -c "create role retratil_app login password 'retratil_app_ci' in role app_runtime;"
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Tests (unit + integration with Postgres)
+        run: npm test
+
+      - name: Production build
+        run: npm run build

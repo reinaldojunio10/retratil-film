@@ -38,8 +38,8 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
           <tr key={p.id} className="hover:bg-soft/50">
             <td className="td"><Link className="link" href={`/projetos/${p.id}`}>{p.title}</Link><DemoTag show={p.is_demo} />{p.manager && <p className="text-xs text-stone-500">{p.manager}</p>}</td>
             <td className="td">{p.client_name ?? "—"}</td>
-            <td className="td whitespace-nowrap">{fmtDateTime(p.shoot_date)}</td>
-            <td className={`td whitespace-nowrap ${p.delivery_date && p.delivery_date < today && !["entregue", "cancelado"].includes(p.status) ? "font-medium text-red-700" : ""}`}>{fmtDate(p.delivery_date)}</td>
+            <td className="td">{fmtDateTime(p.shoot_date)}</td>
+            <td className={`td ${p.delivery_date && p.delivery_date < today && !["entregue", "cancelado"].includes(p.status) ? "font-medium text-red-700" : ""}`}>{fmtDate(p.delivery_date)}</td>
             <td className="td whitespace-nowrap">{brl(p.budget)}</td>
             <td className="td">{p.open_tasks}</td>
             <td className="td"><StatusBadge map={PROJECT_STATUS} value={p.status} /></td>

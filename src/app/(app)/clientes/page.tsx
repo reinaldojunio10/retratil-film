@@ -51,7 +51,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Sp }
               {c.company && <p className="text-xs text-stone-500">{c.company}</p>}
             </td>
             <td className="td whitespace-nowrap">{fmtPhone(c.whatsapp)}</td>
-            <td className="td">{c.email ?? "—"}</td>
+            <td className="td [overflow-wrap:anywhere]">{c.email ?? "—"}</td>
             <td className="td">{c.city ?? "—"}</td>
             <td className="td">{CLIENT_SOURCES[c.source]}</td>
             <td className="td">{c.deals}</td>

@@ -43,8 +43,8 @@ export default async function WhatsAppPage({ searchParams }: { searchParams: Pro
       <div className="mb-6 grid gap-4 lg:grid-cols-3">
         <Card title="Status da integração" className="lg:col-span-2">
           <div className="flex flex-wrap items-center gap-2"><Badge tone={modeInfo.tone}>{modeInfo.label}</Badge><span className="text-sm text-stone-600">{modeInfo.text}</span></div>
-          {cfg.missing.length > 0 && <p className="mt-3 text-xs text-stone-500">Variáveis não configuradas: {cfg.missing.map((m) => <code key={m} className="mr-1 rounded bg-soft px-1">{m}</code>)}</p>}
-          <p className="mt-3 text-xs text-stone-500">URL do webhook para cadastrar no app da Meta: <code className="rounded bg-soft px-1">{appUrl || "(defina APP_URL)"}/api/whatsapp/webhook</code></p>
+          {cfg.missing.length > 0 && <p className="mt-3 text-xs text-stone-500">Variáveis não configuradas: {cfg.missing.map((m) => <code key={m} className="mr-1 inline-block break-all rounded bg-soft px-1">{m}</code>)}</p>}
+          <p className="mt-3 text-xs text-stone-500">URL do webhook para cadastrar no app da Meta: <code className="break-all rounded bg-soft px-1">{appUrl || "(defina APP_URL)"}/api/whatsapp/webhook</code></p>
           <p className="mt-1 text-xs text-stone-500">Eventos recebidos: {data.events?.total ?? 0} ({data.events?.invalid ?? 0} com assinatura inválida) · último: {fmtDateTime(data.events?.last)}</p>
         </Card>
         <Card title="Regras aplicadas">

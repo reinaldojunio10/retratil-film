@@ -3,6 +3,7 @@ import { Card, PageHeader } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { ROLES } from "@/lib/permissions";
 import { changePassword } from "./actions";
+import { InstallApp } from "@/components/pwa";
 
 export const metadata = { title: "Minha conta" };
 
@@ -17,6 +18,9 @@ export default async function AccountPage() {
           { name: "password", label: "Nova senha (mín. 8 caracteres)", type: "password", required: true },
           { name: "confirm", label: "Confirmar nova senha", type: "password", required: true },
         ]} />
+      </Card>
+      <Card title="Instalar o app na tela inicial" className="mt-6 max-w-xl">
+        <InstallApp />
       </Card>
     </>
   );
