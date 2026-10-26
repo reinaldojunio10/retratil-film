@@ -24,10 +24,17 @@ npm run dev                    # http://localhost:3000
 3. No app (Vercel/.env): `DATABASE_URL=postgresql://retratil_app.<ref-do-projeto>:<senha-do-app>@<host-do-pooler>:6543/postgres` (Connect → *Transaction pooler*) e `DATABASE_SSL=true`.
 Atualizações futuras: `npm run db:migrate` com `DATABASE_ADMIN_URL` do usuário `postgres`. Após mudar migrations, regenere o pacote com `npm run db:bundle`.
 
+## Celular e PWA
+O sistema é responsivo e pode ser instalado como app (PWA). Instruções na tela **Minha conta e app**:
+- **iPhone (Safari):** Compartilhar → *Adicionar à Tela de Início*.
+- **Android (Chrome):** botão *Instalar* ou menu ⋮ → *Instalar app*.
+- **Computador (Chrome/Edge):** ícone de instalar na barra de endereço.
+Requer HTTPS (ou localhost). Nenhum dado privado fica salvo no aparelho; sem internet aparece uma página de aviso.
+
 ## Verificações
 ```bash
 npm run lint && npm run typecheck && npm test && npm run build
-BASE_URL=http://localhost:3000 E2E_EMAIL=... E2E_PASSWORD=... npm run test:e2e   # app rodando
+BASE_URL=http://localhost:3000 E2E_EMAIL=... E2E_PASSWORD=... npm run test:e2e   # build de produção rodando (fluxos, PWA e layout responsivo)
 ```
 `npm test` usa `TEST_DATABASE_ADMIN_URL`/`TEST_DATABASE_URL` (bancos terminados em `_test`, que são recriados).
 

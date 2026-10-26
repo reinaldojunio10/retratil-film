@@ -46,12 +46,12 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <nav className="flex flex-wrap gap-1 rounded-lg bg-stone-100 p-1" aria-label="Filtro">
               {tabs.map(([k, l]) => (
-                <Link key={k} href={`/tarefas?filtro=${k}${sp.resp ? `&resp=${sp.resp}` : ""}`} className={`rounded-md px-3 py-1.5 text-sm ${filtro === k ? "bg-white font-medium shadow-xs" : "text-stone-600 hover:text-ink"}`}>{l}</Link>
+                <Link key={k} href={`/tarefas?filtro=${k}${sp.resp ? `&resp=${sp.resp}` : ""}`} className={`inline-flex min-h-10 items-center rounded-md px-3 text-sm md:min-h-0 md:py-1.5 ${filtro === k ? "bg-white font-medium shadow-xs" : "text-stone-600 hover:text-ink"}`}>{l}</Link>
               ))}
             </nav>
-            <form method="get" className="flex gap-2">
+            <form method="get" className="flex w-full gap-2 sm:w-auto">
               <input type="hidden" name="filtro" value={filtro} />
-              <select name="resp" defaultValue={sp.resp ?? ""} className="input w-44" aria-label="Responsável">
+              <select name="resp" defaultValue={sp.resp ?? ""} className="input flex-1 sm:w-44" aria-label="Responsável">
                 <option value="">Todos</option>{users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
               </select>
               <button className="btn btn-secondary">Filtrar</button>
@@ -63,11 +63,13 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
               const done = t.status === "concluida";
               const mayToggle = can(user, "tarefas", true) || t.assignee_id === user.id;
               return (
-                <div key={t.id} className="flex items-start gap-3 p-4">
+                <div key={t.id} className="flex flex-wrap items-start gap-3 p-4 sm:flex-nowrap">
                   {mayToggle ? (
                     <form action={toggleTask}>
                       <input type="hidden" name="id" value={t.id} /><input type="hidden" name="done" value={done ? "0" : "1"} />
-                      <button className={`mt-0.5 grid h-5 w-5 place-items-center rounded border ${done ? "border-ink bg-ink text-white" : "border-stone-300 hover:border-ink"}`} aria-label={done ? "Reabrir tarefa" : "Concluir tarefa"}>{done && "✓"}</button>
+                      <button className="group -m-2.5 grid h-10 w-10 place-items-center" aria-label={done ? "Reabrir tarefa" : "Concluir tarefa"}>
+                        <span className={`grid h-5 w-5 place-items-center rounded border text-xs ${done ? "border-ink bg-ink text-white" : "border-stone-300 group-hover:border-ink"}`}>{done && "✓"}</span>
+                      </button>
                     </form>
                   ) : <span className="mt-0.5 h-5 w-5 rounded border border-stone-200" />}
                   <div className="min-w-0 flex-1">
@@ -76,7 +78,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                       {[t.kind === "compromisso" ? "Compromisso" : null, t.assignee, t.client_name, t.project_title].filter(Boolean).join(" · ")}
                     </p>
                   </div>
-                  <div className="flex shrink-0 flex-col items-end gap-1">
+                  <div className="flex w-full shrink-0 flex-row flex-wrap items-center justify-between gap-1 pl-8 sm:w-auto sm:flex-col sm:items-end sm:pl-0">
                     <span className={`text-xs ${late ? "font-semibold text-red-700" : "text-stone-500"}`}>{late && "Atrasada · "}{fmtDateTime(t.due_at)}</span>
                     <span className="flex gap-1"><StatusBadge map={PRIORITY} value={t.priority} />{t.status !== "pendente" && <StatusBadge map={TASK_STATUS} value={t.status} />}</span>
                   </div>

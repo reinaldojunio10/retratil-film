@@ -32,8 +32,8 @@ export default async function FunnelPage({ searchParams }: { searchParams: Promi
     <>
       <PageHeader title="Funil comercial" description="Fechados e perdidos aparecem por 60 dias."
         actions={<>
-          <form method="get" className="flex gap-2">
-            <select name="resp" defaultValue={sp.resp ?? ""} className="input w-44" aria-label="Responsável">
+          <form method="get" className="flex w-full gap-2 sm:w-auto">
+            <select name="resp" defaultValue={sp.resp ?? ""} className="input flex-1 sm:w-44" aria-label="Responsável">
               <option value="">Todos os responsáveis</option>
               {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
             </select>
@@ -41,13 +41,21 @@ export default async function FunnelPage({ searchParams }: { searchParams: Promi
           </form>
           {w && <ButtonLink href="/funil/novo">Nova oportunidade</ButtonLink>}
         </>} />
-      <div className="-mx-4 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-        <div className="flex gap-4" style={{ minWidth: DEAL_STAGE_KEYS.length * 272 }}>
+      {/* Quadro kanban: rolagem horizontal intencional, com "encaixe" por coluna no celular */}
+      <nav className="mb-3 flex gap-1.5 overflow-x-auto pb-1 md:hidden" aria-label="Ir para etapa" data-scroll-ok="1">
+        {DEAL_STAGE_KEYS.map((s) => (
+          <a key={s} href={`#etapa-${s}`} className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-line bg-white px-3 text-xs font-medium">
+            {DEAL_STAGES[s].label} · {deals.filter((d) => d.stage === s).length}
+          </a>
+        ))}
+      </nav>
+      <div className="-mx-4 snap-x snap-mandatory overflow-x-auto scroll-px-4 px-4 pb-4 sm:-mx-6 sm:px-6 md:snap-none lg:-mx-8 lg:px-8" data-scroll-ok="1">
+        <div className="flex gap-3 md:gap-4">
           {DEAL_STAGE_KEYS.map((stage, idx) => {
             const items = deals.filter((d) => d.stage === stage);
             const total = items.reduce((s, d) => s + d.value, 0);
             return (
-              <section key={stage} className="flex w-64 shrink-0 flex-col rounded-xl bg-stone-100/70 p-2" aria-label={DEAL_STAGES[stage].label}>
+              <section key={stage} id={`etapa-${stage}`} className="flex w-[85vw] max-w-72 shrink-0 snap-start scroll-mt-20 flex-col rounded-xl bg-stone-100/70 p-2 md:w-64" aria-label={DEAL_STAGES[stage].label}>
                 <header className="px-2 py-2">
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-semibold">{DEAL_STAGES[stage].label}</h2>
@@ -70,7 +78,7 @@ export default async function FunnelPage({ searchParams }: { searchParams: Promi
                         )}
                         {d.owner_name && <p className="mt-1 text-xs text-stone-400">{d.owner_name}</p>}
                         {w && (
-                          <div className="mt-2 flex gap-1 border-t border-line pt-2">
+                          <div className="mt-2 flex flex-wrap gap-1 border-t border-line pt-2">
                             {idx > 0 && stage !== "perdido" && <MoveButton id={d.id} stage={DEAL_STAGE_KEYS[idx - 1]} label="←" title={`Mover para ${DEAL_STAGES[DEAL_STAGE_KEYS[idx - 1]].label}`} />}
                             {idx < 5 && <MoveButton id={d.id} stage={DEAL_STAGE_KEYS[idx + 1]} label="→" title={`Mover para ${DEAL_STAGES[DEAL_STAGE_KEYS[idx + 1]].label}`} />}
                             {idx < 5 && <MoveButton id={d.id} stage="fechado" label="Ganho" title="Marcar como fechado" />}

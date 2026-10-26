@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "node tests/e2e/smoke.mjs",
+    "test:e2e": "node tests/e2e/smoke.mjs && node tests/e2e/pwa.mjs && node tests/e2e/responsive.mjs",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:owner": "tsx scripts/create-owner.ts",
     "db:demo": "tsx scripts/seed-demo.ts",
