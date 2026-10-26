@@ -21,7 +21,7 @@
 ## Pendentes / limitações conhecidas
 - **Testes em aparelhos reais não realizados**: celular/tablet testados por emulação no Chromium (Playwright). Safari/WebKit real (iPhone) não estava disponível no ambiente; validar instalação do PWA e layout em iPhone e Android físicos.
 - Um erro de hidratação do React (#418) apareceu uma única vez em `/equipamentos/reservas` durante a auditoria e não se repetiu em 4 execuções seguintes; acompanhar.
-- O workflow `.github/workflows/deno.yml` (adicionado no GitHub) roda `deno lint/test`, que não se aplica a este projeto Node/Next.js e deve falhar; substituir por um workflow Node (`npm ci && npm run lint && npm run typecheck && npm run build`).
+- ~~Workflow Deno incompatível~~ substituído por `.github/workflows/ci.yml` (Node 22 + PostgreSQL 16: lint, typecheck, testes unitários e de integração, build).
 - **Credenciais externas**: WhatsApp Business Platform (token, phone number id, verify token, app secret) não configuradas; envio real nunca foi testado contra a Meta.
 - **Assinatura digital** de contratos não integrada (há apenas registro manual de assinatura).
 - **Arquivos de projeto**: guardados como links (Drive/Dropbox/Frame.io). Upload para Supabase Storage não implementado.
