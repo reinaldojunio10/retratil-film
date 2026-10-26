@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --color-ink: #0a0a0a;
+  --color-line: #e7e5e4;
+  --color-soft: #f5f5f4;
+}
+
+html { -webkit-font-smoothing: antialiased; }
+body { background: #fafaf9; color: #0a0a0a; }
+
+.input {
+  @apply w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink shadow-xs outline-none transition placeholder:text-stone-400 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 disabled:bg-soft;
+}
+.input[aria-invalid="true"] { @apply border-red-500 focus:ring-red-500/10; }
+.btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap; }
+.btn-primary { @apply bg-ink text-white hover:bg-stone-800; }
+.btn-secondary { @apply border border-line bg-white text-ink hover:bg-soft; }
+.btn-ghost { @apply text-stone-600 hover:bg-soft hover:text-ink; }
+.btn-danger { @apply border border-red-200 bg-white text-red-700 hover:bg-red-50; }
+.btn-sm { @apply px-2.5 py-1.5 text-xs; }
+.card { @apply rounded-xl border border-line bg-white; }
+.label { @apply mb-1.5 block text-xs font-medium text-stone-600; }
+.th { @apply px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-stone-500; }
+.td { @apply px-4 py-3 text-sm align-top; }
+.link { @apply font-medium text-ink underline-offset-4 hover:underline; }
