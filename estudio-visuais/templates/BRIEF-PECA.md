@@ -1,0 +1,24 @@
+# Briefing de peça visual
+
+- Artista/show:
+- ID/nome da peça:
+- Categoria:
+- Função no roteiro:
+- Música/áudio:
+- Duração:
+- Loop? Quantos segundos?:
+- Timecode/deixa:
+- Energia/atmosfera:
+- Elementos obrigatórios:
+- Elementos proibidos:
+- Logo/texto e grafia aprovada:
+- Assets fornecidos e autorização:
+- Referências:
+- Telas de destino:
+- Mapa de pixels:
+- FPS/codec/bit depth/alpha:
+- Media server:
+- Prazo:
+- Aprovação do conceito:
+- Aprovação do preview:
+- Aprovação do master:

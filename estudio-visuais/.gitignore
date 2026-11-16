@@ -1,0 +1,6 @@
+# Material privado e arquivos pesados ficam fora do Git
+audio/*
+assets/*
+renders/*
+entregas/*
+!**/.gitkeep
