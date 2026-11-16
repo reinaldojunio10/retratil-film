@@ -223,7 +223,7 @@ function render(t) {
   // luz que viaja: percorre o logo uma vez por loop, de ponta a ponta.
   const sx = (-0.75 + 1.5 * ((t * 1) % 1)) * LW * 0.9;
   sweep.position.set(sx, 2.5 * Math.sin(ph), 13);
-  sweep.intensity = 26 * (0.55 + 0.45 * Math.sin(Math.PI * ((t * 1) % 1)));
+  sweep.intensity = 34 * Math.pow(Math.sin(Math.PI * ((t * 1) % 1)), 1.4);   // apaga nas pontas: o salto do fim para o início não aparece
   rim.intensity = 90 * (0.8 + 0.2 * Math.sin(ph + 0.9));
 
   faceOrange.emissiveIntensity = 0.5 + 0.22 * Math.sin(ph * 2);
