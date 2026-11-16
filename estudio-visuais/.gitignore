@@ -4,3 +4,6 @@ assets/*
 renders/*
 entregas/*
 !**/.gitkeep
+
+# Dependências locais de render
+tools/node_modules/
