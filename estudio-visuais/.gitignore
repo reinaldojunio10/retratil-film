@@ -1,0 +1,9 @@
+# Material privado e arquivos pesados ficam fora do Git
+audio/*
+assets/*
+renders/*
+entregas/*
+!**/.gitkeep
+
+# Dependências locais de render
+tools/node_modules/

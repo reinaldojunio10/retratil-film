@@ -1,0 +1,25 @@
+# Relatório QC
+
+- Artista/show/peça:
+- Categoria:
+- Arquivo e versão:
+- Status: WIP / PREVIEW / TECH-QC / APPROVED / FINAL / BLOCKED
+- Resolução:
+- Proporção:
+- FPS:
+- Duração:
+- Codec/container:
+- Bit depth:
+- Áudio:
+- Alpha:
+- Resolução nativa das fontes:
+- Upscale e método:
+- Mapa de pixels usado:
+- Media server:
+- Reprodução verificada? Método:
+- Loop testado (nº de ciclos):
+- Inspeção visual:
+- Flicker/banding/aliasing/artefatos:
+- Safe areas:
+- Pendências:
+- Aprovador e data:

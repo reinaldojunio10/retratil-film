@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>João Bosco e Gabriel — nome loop</title>
+<style>
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+/*
+ * LOGO_BRAND — loop do nome da dupla para telão 16:9.
+ * Tudo é função da fase t (0..1) com frequências inteiras, então t=0 e t=1
+ * geram o mesmo quadro e o loop fecha sem emenda.
+ *
+ * Parâmetros pela URL: ?scale=2 (4K), ?mark=0 (sem marca de preview), ?t=0.25
+ */
+const W = 1920, H = 1080;
+const q = new URLSearchParams(location.search);
+const SCALE = Number(q.get('scale') || 1);
+const MARK = q.get('mark') !== '0';
+const LINE1 = 'JOÃO BOSCO';
+const LINE2 = 'GABRIEL';
+const TAU = Math.PI * 2;
+
+const canvas = document.getElementById('c');
+canvas.width = W * SCALE; canvas.height = H * SCALE;
+canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+const ctx = canvas.getContext('2d');
+
+// PRNG com semente fixa: o mesmo quadro sai igual em qualquer render.
+function rng(seed) {
+  return () => {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let x = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x;
+    return ((x ^ x >>> 14) >>> 0) / 4294967296;
+  };
+}
+const R = rng(20261116);
+const BEAMS = Array.from({ length: 11 }, (_, i) => ({
+  base: (i - 5) * 0.19 + (R() - 0.5) * 0.05,
+  amp: 0.035 + R() * 0.05,
+  k: 1 + Math.floor(R() * 2),
+  ph: R(),
+  width: 0.035 + R() * 0.04,
+  alpha: 0.20 + R() * 0.20,
+}));
+const DUST = Array.from({ length: 170 }, () => ({
+  x: R() * W, y: R() * H,
+  rise: 1 + Math.floor(R() * 2),          // voltas inteiras por loop
+  sway: 12 + R() * 46, kx: 1 + Math.floor(R() * 3), px: R(),
+  r: 0.8 + R() * R() * 3.4,
+  a: 0.15 + R() * 0.6, kt: 1 + Math.floor(R() * 4), pt: R(),
+}));
+
+function fitSize(text, family, weight, target, spacing) {
+  ctx.font = `${weight} 100px ${family}`;
+  ctx.letterSpacing = (spacing * 100) + 'px';
+  const w = ctx.measureText(text).width - spacing * 100;
+  return 100 * target / w;
+}
+
+function drawLine(text, size, spacing, cx, baseline, t, sweepDelay) {
+  ctx.save();
+  ctx.font = `900 ${size}px "Inter Display", Inter, sans-serif`;
+  ctx.letterSpacing = (spacing * size) + 'px';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  const w = ctx.measureText(text).width - spacing * size;
+  const x = cx - w / 2;
+  const top = baseline - size * 0.74;
+
+  // Halo quente atrás das letras, respirando devagar.
+  const breathe = 0.5 + 0.5 * Math.sin(TAU * t);
+  ctx.shadowColor = `rgba(255, 150, 40, ${0.55 + 0.25 * breathe})`;
+  ctx.shadowBlur = 46 + 22 * breathe;
+  ctx.fillStyle = '#c9861f';
+  ctx.fillText(text, x, baseline);
+  ctx.shadowBlur = 0;
+
+  // Corpo dourado.
+  const g = ctx.createLinearGradient(0, top, 0, baseline);
+  g.addColorStop(0.00, '#fff6d8');
+  g.addColorStop(0.38, '#f6c869');
+  g.addColorStop(0.62, '#d9952c');
+  g.addColorStop(1.00, '#8a4d0c');
+  ctx.fillStyle = g;
+  ctx.fillText(text, x, baseline);
+
+  // Brilho que atravessa o nome uma vez por loop.
+  const p = (t + sweepDelay) % 1;
+  if (p < 0.34) {
+    const u = p / 0.34;
+    const sx = x - 260 + (w + 520) * u;
+    const sg = ctx.createLinearGradient(sx - 200, 0, sx + 200, 0);
+    const peak = Math.sin(Math.PI * u) * 0.9;
+    sg.addColorStop(0, 'rgba(255,255,255,0)');
+    sg.addColorStop(0.5, `rgba(255,252,235,${peak})`);
+    sg.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.fillStyle = sg;
+    ctx.fillText(text, x, baseline);
+  }
+  ctx.restore();
+  return w;
+}
+
+function render(t) {
+  t = ((t % 1) + 1) % 1;
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.filter = 'none';
+
+  // Fundo: preto quente com um clarão baixo, como fumaça iluminada no palco.
+  ctx.fillStyle = '#060302';
+  ctx.fillRect(0, 0, W, H);
+  const pulse = 0.5 + 0.5 * Math.sin(TAU * (t + 0.25));
+  let g = ctx.createRadialGradient(W / 2, H * 0.52, 0, W / 2, H * 0.52, W * 0.62);
+  g.addColorStop(0, `rgba(120, 52, 10, ${0.50 + 0.12 * pulse})`);
+  g.addColorStop(0.45, 'rgba(60, 22, 6, 0.38)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // Fachos de luz saindo de um ponto acima do quadro.
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.filter = 'blur(22px)';
+  const ox = W / 2, oy = -260, len = 1750;
+  for (const b of BEAMS) {
+    const a = b.base + b.amp * Math.sin(TAU * (t * b.k + b.ph));
+    const flick = 0.75 + 0.25 * Math.sin(TAU * (t * (b.k + 1) + b.ph * 3));
+    const a1 = a - b.width, a2 = a + b.width;
+    const bg = ctx.createLinearGradient(ox, oy, ox + Math.sin(a) * len, oy + Math.cos(a) * len);
+    bg.addColorStop(0, `rgba(255, 196, 110, ${b.alpha * flick})`);
+    bg.addColorStop(0.55, `rgba(255, 140, 50, ${b.alpha * 0.45 * flick})`);
+    bg.addColorStop(1, 'rgba(255, 120, 30, 0)');
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.lineTo(ox + Math.sin(a1) * len, oy + Math.cos(a1) * len);
+    ctx.lineTo(ox + Math.sin(a2) * len, oy + Math.cos(a2) * len);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Névoa de chão.
+  g = ctx.createRadialGradient(W / 2, H * 1.04, 0, W / 2, H * 1.04, W * 0.6);
+  g.addColorStop(0, `rgba(255, 150, 60, ${0.30 + 0.08 * pulse})`);
+  g.addColorStop(0.5, 'rgba(160, 70, 20, 0.12)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.scale(1, 0.42);
+  ctx.translate(0, H * 1.44);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, -H, W, H * 3);
+  ctx.restore();
+
+  // Poeira subindo na luz.
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for (const d of DUST) {
+    const y = (((d.y - t * d.rise * H) % H) + H) % H;
+    const x = d.x + d.sway * Math.sin(TAU * (t * d.kx + d.px));
+    const tw = 0.55 + 0.45 * Math.sin(TAU * (t * d.kt + d.pt));
+    const edge = Math.min(1, y / 120, (H - y) / 120);   // some nas bordas: a volta não aparece
+    const al = d.a * tw * Math.max(0, edge);
+    const pg = ctx.createRadialGradient(x, y, 0, x, y, d.r * 4);
+    pg.addColorStop(0, `rgba(255, 226, 170, ${al})`);
+    pg.addColorStop(0.35, `rgba(255, 170, 80, ${al * 0.35})`);
+    pg.addColorStop(1, 'rgba(255, 150, 60, 0)');
+    ctx.fillStyle = pg;
+    ctx.beginPath();
+    ctx.arc(x, y, d.r * 4, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Nome: duas linhas justificadas na mesma largura.
+  const target = 1380, cx = W / 2;
+  const s1 = fitSize(LINE1, '"Inter Display", Inter, sans-serif', 900, target, 0.01);
+  const s2 = fitSize(LINE2, '"Inter Display", Inter, sans-serif', 900, target, 0.12);
+  const base1 = 470, base2 = 470 + 118 + s2 * 0.74;
+  drawLine(LINE1, s1, 0.01, cx, base1, t, 0.0);
+  drawLine(LINE2, s2, 0.12, cx, base2, t, 0.08);
+
+  // "&" entre as linhas, com filetes.
+  const my = base1 + 68;
+  ctx.save();
+  ctx.font = 'italic 400 76px "Liberation Serif", serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#f3cf86';
+  ctx.shadowColor = 'rgba(255,150,40,0.7)';
+  ctx.shadowBlur = 18;
+  ctx.fillText('&', cx, my + 2);
+  ctx.shadowBlur = 0;
+  for (const dir of [-1, 1]) {
+    const lg = ctx.createLinearGradient(cx + dir * 62, 0, cx + dir * (target / 2), 0);
+    lg.addColorStop(0, 'rgba(243, 207, 134, 0.95)');
+    lg.addColorStop(1, 'rgba(243, 207, 134, 0)');
+    ctx.fillStyle = lg;
+    ctx.fillRect(Math.min(cx + dir * 62, cx + dir * (target / 2)), my - 1.5, target / 2 - 62, 3);
+  }
+  ctx.restore();
+
+  // Vinheta.
+  g = ctx.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, W * 0.72);
+  g.addColorStop(0, 'rgba(0,0,0,0)');
+  g.addColorStop(1, 'rgba(0,0,0,0.78)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  if (MARK) {
+    ctx.save();
+    ctx.font = '600 20px Inter, sans-serif';
+    ctx.letterSpacing = '2px';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fillText('PREVIEW — NÃO APROVADO PARA PLAYBACK', W - 36, H - 30);
+    ctx.restore();
+  }
+}
+
+window.renderFrame = render;
+window.ready = Promise.all([
+  document.fonts.load('900 100px "Inter Display"'),
+  document.fonts.load('600 20px Inter'),
+  document.fonts.load('italic 400 76px "Liberation Serif"'),
+]).then(() => {
+  if (q.has('t')) { render(Number(q.get('t'))); return; }
+  // Aberto direto no navegador: toca em tempo real (loop de 8 s).
+  const LOOP = 8000, t0 = performance.now();
+  const tick = (now) => { render(((now - t0) % LOOP) / LOOP); requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+});
+</script>
+</body>
+</html>

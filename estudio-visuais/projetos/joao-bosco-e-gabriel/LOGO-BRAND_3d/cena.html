@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>João Bosco e Gabriel — logo 3D</title>
+<style>
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  canvas { display: block; }
+  #mark { position: fixed; right: 36px; bottom: 28px; font: 600 20px Inter, sans-serif;
+          letter-spacing: 2px; color: rgba(255,255,255,.55); }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "/tools/node_modules/three/build/three.module.js",
+  "three/addons/": "/tools/node_modules/three/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="mark">PREVIEW — NÃO APROVADO PARA PLAYBACK</div>
+<script type="module">
+/*
+ * LOGO_BRAND 3D — logo oficial extrudada, em loop perfeito.
+ * Tudo é função periódica da fase t (0..1); o quadro t=0 é igual ao t=1.
+ * Parâmetros: ?w=1920&h=1080&mark=0&t=0.25
+ */
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const q = new URLSearchParams(location.search);
+const W = Number(q.get('w') || 1920), H = Number(q.get('h') || 1080);
+if (q.get('mark') === '0') document.getElementById('mark').remove();
+const TAU = Math.PI * 2;
+
+// PRNG com semente fixa: cada render sai idêntico.
+function rng(seed) {
+  return () => {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let x = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x;
+    return ((x ^ x >>> 14) >>> 0) / 4294967296;
+  };
+}
+const R = rng(20261116);
+
+const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, W / H, 0.1, 200);
+
+// ---------- fundo ----------
+function gradientTexture(stops, w = 512, h = 288, radial = true, rad = 0.62) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g2 = c.getContext('2d');
+  const g = radial
+    ? g2.createRadialGradient(w / 2, h * 0.5, 0, w / 2, h * 0.5, w * rad)
+    : g2.createLinearGradient(0, 0, w, 0);
+  for (const [o, col] of stops) g.addColorStop(o, col);
+  g2.fillStyle = g; g2.fillRect(0, 0, w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+scene.background = gradientTexture([[0, '#3a1a08'], [0.45, '#190a04'], [1, '#050302']]);
+
+// ---------- ambiente de reflexo (softboxes de palco) ----------
+const pmrem = new THREE.PMREMGenerator(renderer);
+const envScene = new THREE.Scene();
+envScene.background = new THREE.Color(0x070504);
+function panel(w, h, color, k, pos) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h),
+    new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(k), side: THREE.DoubleSide }));
+  m.position.set(...pos); m.lookAt(0, 0, 0); envScene.add(m);
+}
+panel(26, 10, '#fff4e4', 7, [0, 16, 4]);       // softbox de cima
+panel(5, 24, '#ffb866', 6, [-17, 2, 3]);       // faixa quente à esquerda
+panel(5, 24, '#e8f0ff', 5, [17, 2, 3]);        // faixa fria à direita
+panel(30, 6, '#ff9a2e', 7, [0, 3, -16]);       // contraluz laranja
+panel(24, 3, '#ffffff', 2.2, [0, -9, 10]);     // preenchimento baixo
+scene.environment = pmrem.fromScene(envScene, 0.015).texture;
+
+// ---------- logo ----------
+const data = await (await fetch('./logo-contornos.json')).json();
+const S = 0.01;                                  // 1 px da logo = 0.01 unidade
+const LW = data.width * S, LH = data.height * S;
+const DEPTH = 0.95;
+
+const faceWhite = new THREE.MeshPhysicalMaterial({
+  color: '#f7f7f7', metalness: 0.55, roughness: 0.26,
+  clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 1.25,
+  emissive: '#ffffff', emissiveIntensity: 0.07,
+});
+const sideWhite = new THREE.MeshPhysicalMaterial({
+  color: '#ee8f00', metalness: 1, roughness: 0.27, envMapIntensity: 1.5,
+  emissive: '#7a3a00', emissiveIntensity: 0.25,
+});
+const faceOrange = new THREE.MeshPhysicalMaterial({
+  color: '#f29a00', metalness: 0.6, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.06,
+  envMapIntensity: 1.3, emissive: '#ff8a00', emissiveIntensity: 0.5,
+});
+const sideOrange = new THREE.MeshPhysicalMaterial({
+  color: '#c76d00', metalness: 1, roughness: 0.3, envMapIntensity: 1.4,
+  emissive: '#a24a00', emissiveIntensity: 0.4,
+});
+
+const logo = new THREE.Group();
+scene.add(logo);
+const pieces = [];
+function addGroup(polys, mats, thick) {
+  for (const p of polys) {
+    const toV = (r) => r.map(([x, y]) => new THREE.Vector2(x * S - LW / 2, -(y * S) + LH / 2));
+    const shape = new THREE.Shape(toV(p.outer));
+    for (const h of p.holes) shape.holes.push(new THREE.Path(toV(h)));
+    const geo = new THREE.ExtrudeGeometry(shape, {
+      depth: thick, bevelEnabled: true, bevelThickness: 0.085, bevelSize: 0.065,
+      bevelOffset: -0.065, bevelSegments: 5, curveSegments: 1,
+    });
+    geo.computeBoundingBox();
+    const c = new THREE.Vector3(); geo.boundingBox.getCenter(c);
+    c.z = 0;
+    geo.translate(-c.x, -c.y, -thick / 2);
+    const mesh = new THREE.Mesh(geo, mats);
+    mesh.position.set(c.x, c.y, 0);
+    mesh.userData = { x: c.x, y: c.y };
+    logo.add(mesh); pieces.push(mesh);
+  }
+}
+addGroup(data.groups.white, [faceWhite, sideWhite], DEPTH);
+addGroup(data.groups.orange, [faceOrange, sideOrange], DEPTH * 1.15);
+
+// ---------- luzes ----------
+scene.add(new THREE.AmbientLight('#ffe6c8', 0.25));
+const sweep = new THREE.PointLight('#fff1d6', 26, 80, 1.5);   // brilho que viaja pelas letras
+scene.add(sweep);
+const rim = new THREE.PointLight('#ff8a1f', 90, 50, 1.8);
+rim.position.set(0, 3, -9); scene.add(rim);
+const top = new THREE.DirectionalLight('#fff3e0', 1.6);
+top.position.set(2, 14, 8); scene.add(top);
+
+// ---------- fachos de luz ----------
+function beamTexture() {
+  const c = document.createElement('canvas'); c.width = 128; c.height = 512;
+  const g2 = c.getContext('2d');
+  const gx = g2.createLinearGradient(0, 0, 128, 0);
+  gx.addColorStop(0, 'rgba(255,255,255,0)'); gx.addColorStop(0.5, 'rgba(255,255,255,1)'); gx.addColorStop(1, 'rgba(255,255,255,0)');
+  g2.fillStyle = gx; g2.fillRect(0, 0, 128, 512);
+  g2.globalCompositeOperation = 'destination-in';
+  const gy = g2.createLinearGradient(0, 0, 0, 512);
+  gy.addColorStop(0, 'rgba(0,0,0,1)'); gy.addColorStop(0.6, 'rgba(0,0,0,0.35)'); gy.addColorStop(1, 'rgba(0,0,0,0)');
+  g2.fillStyle = gy; g2.fillRect(0, 0, 128, 512);
+  return new THREE.CanvasTexture(c);
+}
+const beamTex = beamTexture();
+const beams = [];
+for (let i = 0; i < 9; i++) {
+  const w = 2.4 + R() * 3;
+  const geo = new THREE.PlaneGeometry(w, 46); geo.translate(0, -23, 0);
+  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+    map: beamTex, color: new THREE.Color(R() < 0.7 ? '#ff9a3a' : '#ffd9a0'), transparent: true,
+    opacity: 0.06 + R() * 0.09, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+  }));
+  m.position.set((i - 4) * 3.4 + (R() - 0.5) * 1.5, 19, -9 - R() * 4);
+  beams.push({ m, base: (i - 4) * 0.075, amp: 0.05 + R() * 0.05, k: 1 + Math.floor(R() * 2), ph: R(), a0: m.material.opacity });
+  scene.add(m);
+}
+
+// ---------- brilho atrás da logo ----------
+const glowTex = gradientTexture([[0, 'rgba(255,170,70,1)'], [0.4, 'rgba(255,120,30,0.35)'], [1, 'rgba(255,100,20,0)']], 256, 256, true, 0.5);
+const glow = new THREE.Mesh(new THREE.PlaneGeometry(40, 18),
+  new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, opacity: 0.3 }));
+glow.position.set(0, 0, -7); scene.add(glow);
+
+// ---------- poeira de luz ----------
+const N = 320;
+const dust = Array.from({ length: N }, () => ({
+  x: (R() - 0.5) * 34, y: R() * 20 - 10, z: -6 + R() * 10,
+  rise: 1 + Math.floor(R() * 2), sway: 0.3 + R() * 1.1, kx: 1 + Math.floor(R() * 3), px: R(),
+  a: 0.3 + R() * 0.7, kt: 1 + Math.floor(R() * 4), pt: R(),
+}));
+const dpos = new Float32Array(N * 3), dcol = new Float32Array(N * 3);
+const dgeo = new THREE.BufferGeometry();
+dgeo.setAttribute('position', new THREE.BufferAttribute(dpos, 3));
+dgeo.setAttribute('color', new THREE.BufferAttribute(dcol, 3));
+const dotTex = gradientTexture([[0, 'rgba(255,255,255,1)'], [0.3, 'rgba(255,255,255,0.4)'], [1, 'rgba(255,255,255,0)']], 64, 64, true, 0.5);
+const points = new THREE.Points(dgeo, new THREE.PointsMaterial({
+  map: dotTex, size: 0.2, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending,
+  depthWrite: false, toneMapped: false, sizeAttenuation: true,
+}));
+scene.add(points);
+
+// ---------- pós-processamento ----------
+const rt = new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, samples: 4 });
+const composer = new EffectComposer(renderer, rt);
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(new UnrealBloomPass(new THREE.Vector2(W, H), 0.5, 0.65, 0.88));
+composer.addPass(new OutputPass());
+
+// ---------- animação ----------
+const tmp = new THREE.Color();
+function render(t) {
+  t = ((t % 1) + 1) % 1;
+  const ph = TAU * t;
+
+  // câmera: órbita lenta de vai-e-volta com leve respiração de distância.
+  const az = 0.34 * Math.sin(ph), el = 0.07 + 0.05 * Math.sin(ph + 1.1);
+  const dist = 31 * (1 + 0.035 * Math.sin(ph + 0.6));
+  camera.position.set(Math.sin(az) * Math.cos(el) * dist, Math.sin(el) * dist, Math.cos(az) * Math.cos(el) * dist);
+  camera.lookAt(0, -0.2, 0);
+
+  // onda de profundidade percorrendo as letras da esquerda para a direita.
+  for (const m of pieces) {
+    const u = (m.userData.x + LW / 2) / LW;
+    m.position.z = 0.42 * Math.sin(ph - u * TAU * 0.85) - 0.02 * m.userData.y;
+  }
+  logo.rotation.y = 0.05 * Math.sin(ph * 2 + 0.4);
+
+  // luz que viaja: percorre o logo uma vez por loop, de ponta a ponta.
+  const sx = (-0.75 + 1.5 * ((t * 1) % 1)) * LW * 0.9;
+  sweep.position.set(sx, 2.5 * Math.sin(ph), 13);
+  sweep.intensity = 34 * Math.pow(Math.sin(Math.PI * ((t * 1) % 1)), 1.4);   // apaga nas pontas: o salto do fim para o início não aparece
+  rim.intensity = 90 * (0.8 + 0.2 * Math.sin(ph + 0.9));
+
+  faceOrange.emissiveIntensity = 0.5 + 0.22 * Math.sin(ph * 2);
+  glow.material.opacity = 0.26 + 0.07 * Math.sin(ph + 1.7);
+
+  for (const b of beams) {
+    b.m.rotation.z = b.base + b.amp * Math.sin(TAU * (t * b.k + b.ph));
+    b.m.material.opacity = b.a0 * (0.75 + 0.25 * Math.sin(TAU * (t * (b.k + 1) + b.ph * 3)));
+  }
+
+  for (let i = 0; i < N; i++) {
+    const d = dust[i];
+    const y = ((((d.y + 10) + t * d.rise * 20) % 20) + 20) % 20 - 10;
+    const x = d.x + d.sway * Math.sin(TAU * (t * d.kx + d.px));
+    dpos[i * 3] = x; dpos[i * 3 + 1] = y; dpos[i * 3 + 2] = d.z;
+    const edge = Math.max(0, Math.min(1, (10 - Math.abs(y)) / 3));     // some nas bordas: a volta não aparece
+    const tw = 0.55 + 0.45 * Math.sin(TAU * (t * d.kt + d.pt));
+    tmp.set('#ffc98a').multiplyScalar(d.a * tw * edge * 0.9);
+    dcol[i * 3] = tmp.r; dcol[i * 3 + 1] = tmp.g; dcol[i * 3 + 2] = tmp.b;
+  }
+  dgeo.attributes.position.needsUpdate = true;
+  dgeo.attributes.color.needsUpdate = true;
+
+  composer.render();
+}
+
+window.renderFrame = render;
+window.ready = true;
+if (q.has('t')) render(Number(q.get('t')));
+else {
+  const LOOP = 8000, t0 = performance.now();
+  const tick = (now) => { render(((now - t0) % LOOP) / LOOP); requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+}
+</script>
+</body>
+</html>
